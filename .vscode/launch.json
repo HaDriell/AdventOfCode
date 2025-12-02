@@ -19,6 +19,14 @@
             "program": "${workspaceFolder}/Build/${env:os}/AOC2/AOC2.exe",
             "cwd": "${workspaceFolder}/AOC2",
             "console": "integratedTerminal"
+        }, 
+        {
+            "name": "AOC3",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Build/${env:os}/AOC3/AOC3.exe",
+            "cwd": "${workspaceFolder}/AOC3",
+            "console": "integratedTerminal"
         }
     ]
 }
