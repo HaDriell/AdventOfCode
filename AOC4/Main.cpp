@@ -36,11 +36,10 @@ std::vector<IDRange> ReadInput(std::string const& filename)
 
 bool IsRepeating(std::string_view string, size_t stride)
 {
-    // Stride cannot repeat a whole number of times
-    if (string.size() % stride) return false;
+    if (string.size() % stride != 0) return false;
 
     std::string_view pattern = string.substr(0, stride);
-    for (size_t offset = stride; offset + stride < string.size(); offset += stride)
+    for (size_t offset = stride; offset + stride <= string.size(); offset += stride)
     {
         std::string_view part = string.substr(offset, stride);
         if (pattern != part)
@@ -56,7 +55,7 @@ bool IsInvalid(uint64_t id)
 {
     std::string string = std::to_string(id);
 
-    for (size_t stride = 1; stride <= string.size(); stride++)
+    for (size_t stride = 1; stride <= string.size() / 2; stride++)
     {
         if (IsRepeating(string, stride))
         {
