@@ -13,3 +13,4 @@ project(
 add_subdirectory(AOC1)
 add_subdirectory(AOC2)
 add_subdirectory(AOC3)
+add_subdirectory(AOC4)
