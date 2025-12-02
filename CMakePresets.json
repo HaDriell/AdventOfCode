@@ -1,0 +1,26 @@
+{
+    "version": 10,
+    "configurePresets": [
+        {
+            "name": "Windows_NT",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/Build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++",
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_MAKE_PROGRAM": "${sourceDir}/tools/ninja/ninja.exe"
+            },
+            "environment": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "1"
+            }
+        }
+    ],
+    
+    "buildPresets": [
+        {
+            "name": "Windows_NT",
+            "configurePreset": "Windows_NT"
+        }
+    ]
+}
