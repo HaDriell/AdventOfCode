@@ -1,13 +1,9 @@
 
-#include <algorithm>
-#include <cassert>
-#include <cstddef>
 #include <cstdint>
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <string_view>
-#include <utility>
 #include <vector>
 
 std::vector<std::string> ReadInput(std::string_view filename)
