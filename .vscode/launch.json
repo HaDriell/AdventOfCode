@@ -35,6 +35,70 @@
             "program": "${workspaceFolder}/Build/${env:os}/AOC4/AOC4.exe",
             "cwd": "${workspaceFolder}/AOC4",
             "console": "integratedTerminal"
+        }, 
+        {
+            "name": "AOC5",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Build/${env:os}/AOC5/AOC5.exe",
+            "cwd": "${workspaceFolder}/AOC5",
+            "console": "integratedTerminal"
+        }, 
+        {
+            "name": "AOC6",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Build/${env:os}/AOC6/AOC6.exe",
+            "cwd": "${workspaceFolder}/AOC6",
+            "console": "integratedTerminal"
+        }, 
+        {
+            "name": "AOC7",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Build/${env:os}/AOC7/AOC7.exe",
+            "cwd": "${workspaceFolder}/AOC7",
+            "console": "integratedTerminal"
+        }, 
+        {
+            "name": "AOC8",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Build/${env:os}/AOC8/AOC8.exe",
+            "cwd": "${workspaceFolder}/AOC8",
+            "console": "integratedTerminal"
+        }, 
+        {
+            "name": "AOC9",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Build/${env:os}/AOC9/AOC9.exe",
+            "cwd": "${workspaceFolder}/AOC9",
+            "console": "integratedTerminal"
+        }, 
+        {
+            "name": "AOC10",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Build/${env:os}/AOC10/AOC10.exe",
+            "cwd": "${workspaceFolder}/AOC10",
+            "console": "integratedTerminal"
+        }, 
+        {
+            "name": "AOC11",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Build/${env:os}/AOC11/AOC11.exe",
+            "cwd": "${workspaceFolder}/AOC11",
+            "console": "integratedTerminal"
+        }, 
+        {
+            "name": "AOC12",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Build/${env:os}/AOC12/AOC12.exe",
+            "cwd": "${workspaceFolder}/AOC12",
+            "console": "integratedTerminal"
         }
     ]
 }
