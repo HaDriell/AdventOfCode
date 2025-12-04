@@ -43,15 +43,7 @@
             "program": "${workspaceFolder}/Build/${env:os}/AOC5/AOC5.exe",
             "cwd": "${workspaceFolder}/AOC5",
             "console": "integratedTerminal"
-        }, 
-        {
-            "name": "AOC5",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/Build/${env:os}/AOC5/AOC5.exe",
-            "cwd": "${workspaceFolder}/AOC5",
-            "console": "integratedTerminal"
-        }, 
+        },
         {
             "name": "AOC6",
             "type": "cppvsdbg",
