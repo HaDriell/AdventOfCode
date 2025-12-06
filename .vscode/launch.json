@@ -99,6 +99,102 @@
             "program": "${workspaceFolder}/Build/${env:os}/AOC12/AOC12.exe",
             "cwd": "${workspaceFolder}/AOC12",
             "console": "integratedTerminal"
+        }, 
+        {
+            "name": "AOC13",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Build/${env:os}/AOC13/AOC13.exe",
+            "cwd": "${workspaceFolder}/AOC13",
+            "console": "integratedTerminal"
+        }, 
+        {
+            "name": "AOC14",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Build/${env:os}/AOC14/AOC14.exe",
+            "cwd": "${workspaceFolder}/AOC14",
+            "console": "integratedTerminal"
+        }, 
+        {
+            "name": "AOC15",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Build/${env:os}/AOC15/AOC15.exe",
+            "cwd": "${workspaceFolder}/AOC15",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "AOC16",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Build/${env:os}/AOC16/AOC16.exe",
+            "cwd": "${workspaceFolder}/AOC16",
+            "console": "integratedTerminal"
+        }, 
+        {
+            "name": "AOC17",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Build/${env:os}/AOC17/AOC17.exe",
+            "cwd": "${workspaceFolder}/AOC17",
+            "console": "integratedTerminal"
+        }, 
+        {
+            "name": "AOC18",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Build/${env:os}/AOC18/AOC18.exe",
+            "cwd": "${workspaceFolder}/AOC18",
+            "console": "integratedTerminal"
+        }, 
+        {
+            "name": "AOC19",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Build/${env:os}/AOC19/AOC19.exe",
+            "cwd": "${workspaceFolder}/AOC19",
+            "console": "integratedTerminal"
+        }, 
+        {
+            "name": "AOC20",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Build/${env:os}/AOC20/AOC20.exe",
+            "cwd": "${workspaceFolder}/AOC20",
+            "console": "integratedTerminal"
+        }, 
+        {
+            "name": "AOC21",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Build/${env:os}/AOC21/AOC21.exe",
+            "cwd": "${workspaceFolder}/AOC21",
+            "console": "integratedTerminal"
+        }, 
+        {
+            "name": "AOC22",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Build/${env:os}/AOC22/AOC22.exe",
+            "cwd": "${workspaceFolder}/AOC22",
+            "console": "integratedTerminal"
+        }, 
+        {
+            "name": "AOC23",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Build/${env:os}/AOC23/AOC23.exe",
+            "cwd": "${workspaceFolder}/AOC23",
+            "console": "integratedTerminal"
+        }, 
+        {
+            "name": "AOC24",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Build/${env:os}/AOC24/AOC24.exe",
+            "cwd": "${workspaceFolder}/AOC24",
+            "console": "integratedTerminal"
         }
     ]
 }
