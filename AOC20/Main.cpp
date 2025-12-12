@@ -6,25 +6,68 @@
 #include <fstream>
 #include <iostream>
 #include <istream>
+#include <ostream>
+#include <set>
 #include <sstream>
 #include <string>
+#include <unordered_set>
+#include <utility>
 #include <vector>
 
-struct ButtonData
+namespace Flags
 {
-    std::vector<uint64_t> Bindings;
-};
+    template<typename Integer>
+    Integer Set(Integer data, size_t index)
+    {
+        static_assert(std::is_integral_v<Integer>, "Must be Integral");
+        assert(index < sizeof(Integer) * 8);
+        Integer mask = 0x1 << index;
 
-struct MachineData
+        return data | mask;
+    }
+
+    template<typename Integer>
+    Integer Clear(Integer data, size_t index)
+    {
+        static_assert(std::is_integral_v<Integer>, "Must be Integral");
+        assert(index < sizeof(Integer) * 8);
+        Integer mask = 0x1 << index;
+
+        return data & !mask;
+    }
+
+    template<typename Integer>
+    Integer Toggle(Integer data, size_t index)
+    {
+        static_assert(std::is_integral_v<Integer>, "Must be Integral");
+        assert(index < sizeof(Integer) * 8);
+        Integer mask = 0x1 << index;
+
+        return data ^ mask;
+    }
+
+    template<typename Integer>
+    bool Get(Integer data, size_t index)
+    {
+        static_assert(std::is_integral_v<Integer>, "Must be Integral");
+        assert(index < sizeof(Integer) * 8);
+        Integer mask = 0x1 << index;
+        
+        return data & mask;
+    }
+}
+
+struct Machine
 {
-    std::vector<bool> Lights;
-    std::vector<ButtonData> Buttons;
+    uint64_t LightState;
+    size_t LightCount;
+
+    std::vector<uint64_t> Buttons;
+
     std::vector<uint64_t> Joltages;
-
 
     void Parse(std::istream& stream)
     {
-        Lights.clear();
         Buttons.clear();
         Joltages.clear();
 
@@ -32,7 +75,7 @@ struct MachineData
         {
             switch (stream.get())
             {
-                case '[': ParseLightData(stream); break;
+                case '[': ParseLights(stream); break;
                 case '(': ParseButton(stream); break;
                 case '{': ParseJoltage(stream); break;
 
@@ -41,15 +84,19 @@ struct MachineData
         }
     }
 
-    void ParseLightData(std::istream& stream)
+    void ParseLights(std::istream& stream)
     {
         std::string data;
         std::getline(stream, data, ']');
 
-        Lights.reserve(data.size());
-        for (char c : data)
+        LightCount = data.size();
+        LightState = 0;
+        for (size_t index = 0; index < data.size(); index++)
         {
-            Lights.push_back(c == '#');
+            if (data.at(index) == '#')
+            {
+                LightState = Flags::Set(LightState, index);
+            }
         }
     }
 
@@ -58,20 +105,19 @@ struct MachineData
         std::string data;
         std::getline(stream, data, ')');
 
-        ButtonData& newButton = Buttons.emplace_back();
+        uint64_t bindings = 0;
 
         std::istringstream substream(data);
         while (!substream.eof())
         {
-            uint64_t binding;
-            substream >> binding;
-            newButton.Bindings.push_back(binding);
+            size_t index;
+            substream >> index;
+            bindings = Flags::Set(bindings, index);
 
-            if (!substream.eof())
-            {
-                assert(substream.get() == ',');
-            }
+            assert(substream.eof() || substream.get() == ',');
         }
+
+        Buttons.push_back(bindings);
     }
 
     void ParseJoltage(std::istream& stream)
@@ -96,21 +142,31 @@ struct MachineData
     }
 };
 
-std::ostream& operator<<(std::ostream& stream, MachineData const& machine)
+std::ostream& PrintLightState(std::ostream& stream, uint64_t state, size_t count)
 {
     stream << '[';
-    for (bool light : machine.Lights) stream << (light ? '#' : '.');
+    for (size_t index = 0; index < count; index++)
+    {
+        std::cout << (Flags::Get(state,count - index - 1) ? '#' : '.');
+    }
     stream << "] ";
+    return stream;
+}
 
-    for (auto const& button : machine.Buttons)
+std::ostream& operator<<(std::ostream& stream, Machine const& machine)
+{
+    PrintLightState(stream, machine.LightState, machine.LightCount);
+    for (auto const& bindings : machine.Buttons)
     {
         stream << '(';
         bool first = true;
-        for (uint64_t binding : button.Bindings)
+        for (size_t index = 0; index < machine.LightCount; index++)
         {
+            if (!Flags::Get(bindings, index)) continue;
+
             if (first) first = false;
             else stream << ',';
-            stream << binding;
+            stream << index;
         }
         stream << ") ";
     }
@@ -131,15 +187,15 @@ std::ostream& operator<<(std::ostream& stream, MachineData const& machine)
     return stream;
 }
 
-std::vector<MachineData> ReadInput(std::string const& filename)
+std::vector<Machine> ReadInput(std::string const& filename)
 {
-    std::vector<MachineData> result;
+    std::vector<Machine> result;
 
     std::ifstream stream(filename);
     std::string line;
     while (std::getline(stream, line))
     {
-        MachineData& machine = result.emplace_back();
+        Machine& machine = result.emplace_back();
         std::istringstream lstream(line);
         machine.Parse(lstream);
     }
@@ -147,12 +203,45 @@ std::vector<MachineData> ReadInput(std::string const& filename)
     return result;
 }
 
+size_t Solve(Machine const& machine)
+{
+    std::unordered_set<uint64_t> states;
+    states.insert(0); // initial state
+
+    size_t iterations = 0;
+    while (states.find(machine.LightState) == states.end())
+    {
+        std::unordered_set<uint64_t> nexts;
+        for (uint64_t state : states)
+        {
+            for (uint64_t bindings : machine.Buttons)
+            {
+                uint64_t next = state ^ bindings;
+                nexts.insert(next);
+            }
+        }
+
+        for (uint64_t next :nexts) states.insert(next);
+        iterations++;
+    }
+
+    return iterations;
+}
+
 int main(int argc, char** argv)
 {
     auto machines = ReadInput("input.txt");
+
+    uint64_t total = 0;
     for (auto const& machine : machines)
     {
-        std::cout << machine;
+        std::cout << "Solving Machine : " << machine << " : ";
+        size_t iterations = Solve(machine);
+        std::cout << iterations << "\n";
+        
+        total += iterations;
     }
+
+    std::cout << "Total : " << total << "\n";
     return 0;
 }
