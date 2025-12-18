@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <set>
 #include <sstream>
@@ -175,110 +176,63 @@ std::vector<std::vector<Device const*>> GetAllPaths(Device const* begin, Device 
     return paths;
 }
 
-size_t CountPathsRecursive(Device const* begin, Device const* end, std::set<Device const*>& visited)
+bool IsConnected(Device const* begin, Device const* end)
 {
-    if (begin == end) return 0;
-    visited.insert(begin);
+    assert(begin != end);
+    std::set<Device const*> visited;
+    std::vector<Device const*> queue;
+    queue.push_back(begin);
 
-    size_t total = 0;
-    for (auto next : begin->GetOutputs())
+    while (true)
     {
-        if (next == end)
-        {
-            total++; // end detected
-            continue;
-        }
-        
-        if (visited.find(next) != visited.end())
-        {
-            continue; // cycle detected
-        }
+        auto current = queue.back();
+        queue.pop_back();
+        visited.insert(current);
 
-        // Recurse call
-        total += CountPathsRecursive(next, end, visited);
+        for (auto output : current->GetOutputs())
+        {
+            if (output == end) return true;
+            if (visited.find(output) != visited.end()) continue;
+            queue.push_back(output);
+        }
     }
 
-    visited.erase(begin);
-
-    return total;
+    return false;
 }
 
-size_t CountPaths(Device const* begin, Device const* end)
+void CollectAllDevicesBetween(Device const* begin, Device const* end, std::set<Device const*>& devices)
 {
-    std::set<Device const*> visited;
-    return CountPathsRecursive(begin, end, visited);
+    devices.insert(begin);
+    devices.insert(end);
+    for (auto output : begin->GetOutputs())
+    {
+        if (devices.find(output) != devices.end()) continue; // already found
+        if (!IsConnected(output, end)) continue; // not connected
+
+        devices.insert(output);
+        CollectAllDevicesBetween(output, end, devices);
+    }
 }
 
-std::vector<std::vector<Device const*>> GetPathsBetween(Device const* begin, Device const* end)
+size_t CountAllPaths(Device const* begin, Device const* end, std::set<Device const*> const& whitelist)
 {
-    std::cout << "Computing Paths from " << begin->GetName() << " to " << end->GetName() << "\n";
-    std::vector<std::vector<Device const*>> paths;
+    assert(begin != end);
 
-    using OutputIterator = std::vector<Device const*>::const_iterator;
-    struct Frame
+    size_t count = 0;
+    for (auto output : begin->GetOutputs())
     {
-        Device const* Device;
-        OutputIterator Current;
-        OutputIterator End;
-    };
-
-    auto PushFrame = [](std::vector<Frame>& stack, Device const* device)
-    {
-        stack.push_back({ device, device->GetOutputs().begin(), device->GetOutputs().end() });
-    };
-
-    auto PopFrame = [](std::vector<Frame>& stack)
-    {
-        stack.pop_back();
-    };
-
-    auto HasNext = [] (std::vector<Frame>& stack)
-    {
-        auto const& top = stack.back();
-        return top.Current != top.End;
-    };
-
-    auto GetTopFrame = [] (std::vector<Frame>& stack) -> Frame& { return stack.back(); };
-
-    auto ConvertToPath = [] (std::vector<Frame> const& stack)
-    {
-        std::vector<Device const*> path;
-        for (Frame const& frame : stack)
+        if (whitelist.find(output) == whitelist.end()) continue; // skip
+        if (output == end)
         {
-            path.push_back(frame.Device);
+            count++;
         }
-        return path;
-    };
-
-    std::vector<Frame> stack;
-    PushFrame(stack, begin);
-
-    do
-    {
-        if (GetTopFrame(stack).Device == end)
+        else
         {
-            // Store path, pop end
-            paths.emplace_back(ConvertToPath(stack));
-            PopFrame(stack);
+            count += CountAllPaths(output, end, whitelist);
         }
-        else if (!HasNext(stack))
-        {
-            PopFrame(stack);
-        }
-        else        
-        {
-            // advance top and stack a child (Depth First Search)
-            auto& top = GetTopFrame(stack);
-            auto output = *top.Current;
-            top.Current++;
+    }
 
-            if (std::any_of(stack.begin(), stack.end(), [output] (auto const& frame) { return frame.Device == output; })) continue;
-            PushFrame(stack, output);
-        }
-
-    } while (!stack.empty());
-
-    return paths;
+    return count;
 }
 
 int main(int argc, char** argv)
@@ -291,26 +245,33 @@ int main(int argc, char** argv)
     Device const* fft = db.Find("fft");
     Device const* dac = db.Find("dac");
 
-    std::cout << "Finding all paths\n";
-    std::cout << "There are " << CountPaths(db.Find("you"), db.Find("out")) << " paths\n";
+    std::set<Device const*> devices, visited;
+    CollectAllDevicesBetween(svr, out, devices);
+    std::cout << "There are " << devices.size() << " devices between svr and out\n";
+
+    std::cout << "Finding all paths\n";    
+    visited.clear();
+    std::cout << "There are " << CountAllPaths(db.Find("you"), db.Find("out"), devices, visited) << " paths\n";
+    visited.clear();
+    std::cout << "There are " << CountAllPaths(svr, out, devices, visited) << " paths\n";
     
-    size_t total = 0;
-    total += CountPaths(svr, fft) * CountPaths(fft, dac) * CountPaths(dac, out);
-    total += CountPaths(svr, dac) * CountPaths(dac, fft) * CountPaths(fft, out);
-    std::cout << "Total Paths svr -> out passing by fft & dac in any order " << total << "\n";
+    // size_t total = 0;
+    // total += CountPaths(svr, fft) * CountPaths(fft, dac) * CountPaths(dac, out);
+    // total += CountPaths(svr, dac) * CountPaths(dac, fft) * CountPaths(fft, out);
+    // std::cout << "Total Paths svr -> out passing by fft & dac in any order " << total << "\n";
 
-    total = 0;
-    auto svr_to_fft = GetPathsBetween(svr, fft);
-    auto fft_to_dac = GetPathsBetween(fft, dac);
-    auto dac_to_out = GetPathsBetween(dac, out);
-    total += svr_to_fft.size() * fft_to_dac.size() * dac_to_out.size();
+    // total = 0;
+    // auto svr_to_fft = GetPathsBetween(svr, fft);
+    // auto fft_to_dac = GetPathsBetween(fft, dac);
+    // auto dac_to_out = GetPathsBetween(dac, out);
+    // total += svr_to_fft.size() * fft_to_dac.size() * dac_to_out.size();
 
-    auto svr_to_dac = GetPathsBetween(svr,dac);
-    auto dac_to_fft = GetPathsBetween(dac, fft);
-    auto fft_to_out = GetPathsBetween(fft,out);
-    total += svr_to_dac.size() * dac_to_fft.size() * fft_to_out.size();
+    // auto svr_to_dac = GetPathsBetween(svr,dac);
+    // auto dac_to_fft = GetPathsBetween(dac, fft);
+    // auto fft_to_out = GetPathsBetween(fft,out);
+    // total += svr_to_dac.size() * dac_to_fft.size() * fft_to_out.size();
 
-    std::cout << "Total Paths svr -> out passing by fft & dac in any order " << total << "\n";
+    // std::cout << "Total Paths svr -> out passing by fft & dac in any order " << total << "\n";
 
     return 0;
 }
