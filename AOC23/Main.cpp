@@ -6,9 +6,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
-#include <set>
 #include <sstream>
-#include <stack>
 #include <string>
 #include <vector>
 
@@ -130,109 +128,28 @@ DeviceDatabase ReadInput(std::string const& filename)
     return db;
 }
 
-bool Contains(std::vector<Device const*> const& path, Device const* device)
+size_t CountAllPathsRecursive(Device const* begin, Device const* end, std::map<Device const*, size_t>& cache)
 {
-    return std::find(path.begin(), path.end(), device) != path.end();
-}
-
-void ExploreAllPathsUntil(std::vector<std::vector<Device const*>>& paths, Device const* end)
-{
-    while (true)
-    {
-        // Find any explorable path
-        auto it = std::find_if(paths.begin(), paths.end(), [end] (auto const& path) { return path.back() != end; });
-        if (it == paths.end()) break; // All Paths found
-
-        std::vector<Device const*> nexts;
-        it->back()->GetOutputs(nexts);
-        // Remove cycles
-        auto _ = std::remove_if(nexts.begin(), nexts.end(), [it] (Device const* next) { return Contains(*it, next); });
-
-        if (nexts.empty())
-        {
-            // No remaining nexts => this path is a dead-end
-            paths.erase(it);
-        }
-        else
-        {
-            std::vector<Device const*> copy = *it;
-            //small optimization => reuse the current path for the first iteration
-            it->push_back(nexts.at(0));
-            // Duplicate path for each Next
-            std::for_each(nexts.begin() + 1, nexts.end(), [&copy, &paths] (Device const* next)
-            {
-                auto& nextPath = paths.emplace_back(copy);
-                nextPath.push_back(next);
-            });
-        }
-    }
-}
-
-std::vector<std::vector<Device const*>> GetAllPaths(Device const* begin, Device const* end)
-{
-    std::vector<std::vector<Device const*>> paths;
-    paths.push_back({ begin });
-    ExploreAllPathsUntil(paths, end);
-    return paths;
-}
-
-bool IsConnected(Device const* begin, Device const* end)
-{
-    assert(begin != end);
-    std::set<Device const*> visited;
-    std::vector<Device const*> queue;
-    queue.push_back(begin);
-
-    while (true)
-    {
-        auto current = queue.back();
-        queue.pop_back();
-        visited.insert(current);
-
-        for (auto output : current->GetOutputs())
-        {
-            if (output == end) return true;
-            if (visited.find(output) != visited.end()) continue;
-            queue.push_back(output);
-        }
-    }
-
-    return false;
-}
-
-void CollectAllDevicesBetween(Device const* begin, Device const* end, std::set<Device const*>& devices)
-{
-    devices.insert(begin);
-    devices.insert(end);
-    for (auto output : begin->GetOutputs())
-    {
-        if (devices.find(output) != devices.end()) continue; // already found
-        if (!IsConnected(output, end)) continue; // not connected
-
-        devices.insert(output);
-        CollectAllDevicesBetween(output, end, devices);
-    }
-}
-
-size_t CountAllPaths(Device const* begin, Device const* end, std::set<Device const*> const& whitelist)
-{
-    assert(begin != end);
-
     size_t count = 0;
+
     for (auto output : begin->GetOutputs())
     {
-        if (whitelist.find(output) == whitelist.end()) continue; // skip
-        if (output == end)
-        {
+        if (cache.find(output) != cache.end())
+            count += cache.at(output);
+        else if (output == end)
             count++;
-        }
         else
-        {
-            count += CountAllPaths(output, end, whitelist);
-        }
+            count += CountAllPathsRecursive(output, end, cache);        
     }
 
+    cache.emplace(begin, count);
     return count;
+}
+
+size_t CountAllPathsRecursive(Device const* begin, Device const* end)
+{
+    std::map<Device const*, size_t> cache;
+    return CountAllPathsRecursive(begin, end, cache);
 }
 
 int main(int argc, char** argv)
@@ -240,38 +157,23 @@ int main(int argc, char** argv)
     std::cout << "Graphing Devices\n\n";
 
     auto db = ReadInput("input.txt");
+    Device const* you = db.Find("you");
     Device const* svr = db.Find("svr");
     Device const* out = db.Find("out");
     Device const* fft = db.Find("fft");
     Device const* dac = db.Find("dac");
 
-    std::set<Device const*> devices, visited;
-    CollectAllDevicesBetween(svr, out, devices);
-    std::cout << "There are " << devices.size() << " devices between svr and out\n";
+    std::cout << "Finding all paths\n";
+    std::cout << "You -> Out = " << CountAllPathsRecursive(you, out) << " excpecting 670 from AOC22\n";
 
-    std::cout << "Finding all paths\n";    
-    visited.clear();
-    std::cout << "There are " << CountAllPaths(db.Find("you"), db.Find("out"), devices, visited) << " paths\n";
-    visited.clear();
-    std::cout << "There are " << CountAllPaths(svr, out, devices, visited) << " paths\n";
-    
-    // size_t total = 0;
-    // total += CountPaths(svr, fft) * CountPaths(fft, dac) * CountPaths(dac, out);
-    // total += CountPaths(svr, dac) * CountPaths(dac, fft) * CountPaths(fft, out);
-    // std::cout << "Total Paths svr -> out passing by fft & dac in any order " << total << "\n";
+    size_t sd = CountAllPathsRecursive(svr, dac); std::cout << " sd = " << sd << "\n";
+    size_t df = CountAllPathsRecursive(dac, fft); std::cout << " df = " << df << "\n";
+    size_t fo = CountAllPathsRecursive(fft, out); std::cout << " fo = " << fo << "\n";
 
-    // total = 0;
-    // auto svr_to_fft = GetPathsBetween(svr, fft);
-    // auto fft_to_dac = GetPathsBetween(fft, dac);
-    // auto dac_to_out = GetPathsBetween(dac, out);
-    // total += svr_to_fft.size() * fft_to_dac.size() * dac_to_out.size();
+    size_t sf = CountAllPathsRecursive(svr, fft); std::cout << " sf = " << sf << "\n";
+    size_t fd = CountAllPathsRecursive(fft, dac); std::cout << " fd = " << fd << "\n";
+    size_t dO = CountAllPathsRecursive(dac, out); std::cout << " dO = " << dO << "\n";
 
-    // auto svr_to_dac = GetPathsBetween(svr,dac);
-    // auto dac_to_fft = GetPathsBetween(dac, fft);
-    // auto fft_to_out = GetPathsBetween(fft,out);
-    // total += svr_to_dac.size() * dac_to_fft.size() * fft_to_out.size();
-
-    // std::cout << "Total Paths svr -> out passing by fft & dac in any order " << total << "\n";
-
+    std::cout << " sdfo+sfdo = " << (sd * df * fo + sf * fd * dO) << "\n";
     return 0;
 }
